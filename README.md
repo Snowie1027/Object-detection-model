@@ -12,55 +12,51 @@
     2  使用torchvision.datasets.VOCDetection类加载数据集,并划分为训练集、验证集和测试集。
 
 ## 3. 训练与测试
-   
-### 3.1 Faster R-CNN
-    1  使用torchvision.models.detection.fasterrcnn_resnet50_fpn预训练模型作为backbone。
-    2  修改模型输出类别数,并在训练集上fine-tune模型。
-    3  使用测试集评估模型性能。
- 
-### python
-import torch
-from torchvision.models.detection import fasterrcnn_resnet50_fpn
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
-#### 加载预训练的Faster R-CNN模型
-model = fasterrcnn_resnet50_fpn(pretrained=True)
+### 3.1 Faster R-CNN在VOC数据集上的训练和测试
+#### 3.1.1训练
+1）数据集的准备
+本文使用VOC格式进行训练，训练前需要下载好VOC07的数据集，解压后放在根目录。
+2）数据集的处理
+修改voc_annotation.py里面的annotation_mode=2，运行voc_annotation.py生成根目录下的2007_train.txt和2007_val.txt。
+3）开始网络训练
+train.py的默认参数用于训练VOC数据集，直接运行train.py即可开始训练。
+4）训练结果预测
+训练结果预测需要用到两个文件，分别是frcnn.py和predict.py。
+我们首先需要去frcnn.py里面修改model_path以及classes_path，这两个参数必须要修改。
+model_path指向训练好的权值文件，在logs文件夹里。
+classes_path指向检测类别所对应的txt。
+完成修改后就可以运行predict.py进行检测了。运行后输入图片路径即可检测。
+#### 3.1.2预测
+下载完库后解压，在百度网盘下载frcnn_weights.pth，放入model_data，运行predict.py。
+在predict.py里面进行设置可以进行fps测试和video视频检测。
+#### 3.1.3评估
+1）本文使用VOC格式进行评估。VOC07+12已经划分好了测试集，无需利用voc_annotation.py生成ImageSets文件夹下的txt。
+2）在frcnn.py里面修改model_path以及classes_path。model_path指向训练好的权值文件，在logs文件夹里。classes_path指向检测类别所对应的txt。
+3）运行get_map.py即可获得评估结果，评估结果会保存在map_out文件夹中。
 
-#### 修改模型输出类别数
-num_classes = 21  # VOC数据集有20个类别+背景
-in_features = model.roi_heads.box_predictor.cls_score.in_features
-model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-
-#### 在训练集上fine-tune模型
-# ...
-
-#### 在测试集上评估模型
-# ...
-
-### 3.2 YOLO V3
-    1  使用darknet模块构建YOLO V3模型。
-    2  修改最后一层输出通道数,适配VOC数据集的类别数。
-    3  在训练集上训练模型。
-    4  使用测试集评估模型性能。
- 
-#### python
-
-#### 複製
-import torch.nn as nn
-from darknet import Darknet
-
-#### 构建YOLO V3模型
-model = Darknet('cfg/yolov3.cfg')
-model.load_state_dict(torch.load('weights/yolov3.weights'))
-
-#### 修改最后一层输出通道数
-model.module_list[-1][0].num_classes = 20  # VOC数据集有20个类别
-
-#### 在训练集上训练模型
-...
-
-#### 在测试集上评估模型
-...
+### 3.2 YOLO V3在VOC数据集上的训练和测试
+#### 3.2.1训练
+1）数据集的准备
+本文使用VOC格式进行训练，训练前需要下载好VOC07的数据集，解压后放在根目录。
+2）数据集的处理
+在完成数据集的摆放之后，我们需要利用voc_annotation.py获得训练用的2007_train.txt和2007_val.txt。
+修改voc_annotation.py里面的参数。第一次训练可以仅修改classes_path，classes_path用于指向检测类别所对应的txt。
+训练自己的数据集时，可以自己建立一个cls_classes.txt，里面写自己所需要区分的类别。
+3）开始网络训练
+train.py的默认参数用于训练VOC数据集，直接运行train.py即可开始训练。
+4）训练结果预测
+训练结果预测需要用到两个文件，分别是yolo.py和predict.py。在yolo.py里面修改model_path以及classes_path。
+model_path指向训练好的权值文件，在logs文件夹里。
+classes_path指向检测类别所对应的txt。
+完成修改后就可以运行predict.py进行检测了。运行后输入图片路径即可检测。
+#### 3.2.2预测
+下载完库后解压，在百度网盘下载yolo_weights.pth，放入model_data，运行predict.py。
+在predict.py里面进行设置可以进行fps测试和video视频检测。
+#### 3.2.3评估
+1）本文使用VOC格式进行评估。VOC07+12已经划分好了测试集，无需利用voc_annotation.py生成ImageSets文件夹下的txt。
+2）在yolo.py里面修改model_path以及classes_path。model_path指向训练好的权值文件，在logs文件夹里。classes_path指向检测类别所对应的txt。
+3）运行get_map.py即可获得评估结果，评估结果会保存在map_out文件夹中。
 
 ## 4. 可视化分析
 ### 4.1 Faster R-CNN的proposal box和预测结果
